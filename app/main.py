@@ -1,37 +1,27 @@
-import sqlite3
 from fastapi import FastAPI, Depends
-
+from sqlalchemy.orm import Session
+from app.database import engine, sessionlocal, Base
+from app.model import User
+Base.metadata.create_all(engine)
 app = FastAPI()
-def int_db():
-    connection = sqlite3.connect("testsecond.db")
-    cursor = connection.cursor()
-    cursor.execute("""CREATE TABLE IF NOT EXISTS users(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL
-    ) """)
-    connection.commit()
-    connection.close()
-
-int_db()
 
 def get_db():
-    connection = sqlite3.connect("testsecond.db")
+    db = sessionlocal()
     try:
-        yield connection
+        yield db
     finally:
-        connection.close()
+        db.close()
 
 @app.get("/users")
-def get_users(db=Depends(get_db)):
-    cursor = db.cursor()
-    cursor.execute("SELECT*FROM users")
-    users = cursor.fetchall()
-    return {"users": users}
+def get_users(db:Session=Depends(get_db)):
+    users = db.query(User).all()
+    return [{"id": u.id, "name": u.name} for u in users]
 
 
 @app.post("/users")
-def add_user(name: str, db=Depends(get_db)):
-    cursor =db.cursor()
-    cursor.execute("INSERT INTO users (name) VALUES (?)", (name, ))
+def add_user(name: str, db: Session=Depends(get_db)):
+    user = User(name=name)
+    db.add(user)
     db.commit()
-    return {"message": "User added successfully"}
+    db.refresh(user)
+    return {"id": user.id, "name": user.name}
