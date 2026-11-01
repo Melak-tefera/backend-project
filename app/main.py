@@ -1,3 +1,5 @@
+from http.client import HTTPException
+
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from app.database import engine, sessionlocal, Base
@@ -24,4 +26,11 @@ def add_user(name: str, db: Session=Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+    return {"id": user.id, "name": user.name}
+
+@app.get("/users/{id}")
+def get_user_by_id(id:int, db:Session=Depends(get_db)):
+    user = db.query(User).filter(User.id == id).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
     return {"id": user.id, "name": user.name}
