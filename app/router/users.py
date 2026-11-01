@@ -12,7 +12,7 @@ def get_users(db:Session=Depends(get_db)):
     return [{"id": u.id, "name": u.name} for u in users]
 
 
-@router.post("", response_model=Usercreate)
+@router.post("", response_model=Usercreate,status_code=201)
 def add_user(name: str, db: Session=Depends(get_db)):
     user = User(name=name)
     db.add(user)
@@ -27,4 +27,4 @@ def get_user_by_id(id: int, db: Session = Depends(get_db)):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return {"id": user.id, "name": user.name}
+    return user

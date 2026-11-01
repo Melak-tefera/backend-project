@@ -11,5 +11,9 @@ Base.metadata.create_all(engine)
 app = FastAPI()
 app.include_router(users.router)
 
+@app.get("/")
+def home():
+    return {"message": "User API is running"}
+
 
 
